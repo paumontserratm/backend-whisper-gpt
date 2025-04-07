@@ -15,10 +15,11 @@ module.exports = async (req, res) => {
     req.on('end', async () => {
       const audioBuffer = Buffer.concat(chunks);
 
+      // Usamos .mp3 por defecto (es el más común y compatible)
       const form = new FormData();
       form.append('file', audioBuffer, {
-        filename: 'audio.webm',
-        contentType: 'audio/webm',
+        filename: 'audio.mp3',
+        contentType: 'audio/mpeg',
       });
       form.append('model', 'whisper-1');
 
@@ -34,6 +35,7 @@ module.exports = async (req, res) => {
       const whisperData = await whisperRes.json();
 
       if (!whisperData.text) {
+        console.error('Transcription error:', whisperData);
         return res.status(500).json({ error: 'Error en la transcripción' });
       }
 
