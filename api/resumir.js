@@ -1,39 +1,34 @@
-const { OpenAI } = require('openai');
+const { OpenAI } = require("openai");
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 module.exports = async (req, res) => {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Método no permitido" });
   }
 
   try {
-    const { textos } = req.body;
+    const { fragmentos } = req.body;
 
-    if (!Array.isArray(textos) || textos.length === 0) {
-      return res.status(400).json({ error: 'Debes enviar una lista de textos' });
+    if (!fragmentos || !Array.isArray(fragmentos) || fragmentos.length === 0) {
+      return res.status(400).json({ error: "No se proporcionaron fragmentos válidos" });
     }
 
-    const textoTotal = textos.join('\n\n');
+    const contenido = fragmentos.join("\n");
 
-    const chatRes = await openai.chat.completions.create({
-      model: 'gpt-4',
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
       messages: [
-        {
-          role: 'system',
-          content: 'Resume esta conversación comercial de forma clara y ordenada.',
-        },
-        {
-          role: 'user',
-          content: textoTotal,
-        },
+        { role: "system", content: "Resume esta reunión de forma clara, ordenada y útil para compartir con alguien que no asistió." },
+        { role: "user", content: contenido },
       ],
     });
 
-    const resumen = chatRes.choices[0].message.content;
+    const resumen = completion.choices[0].message.content;
     res.status(200).json({ resumen });
-  } catch (err) {
-    console.error('ERROR:', err);
-    res.status(500).json({ error: 'Error generando resumen' });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al generar el resumen" });
   }
 };
