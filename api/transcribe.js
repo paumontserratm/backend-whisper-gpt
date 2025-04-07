@@ -10,7 +10,6 @@ module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "*");
 
-  // Preflight
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
@@ -20,24 +19,18 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const contentType = req.headers["content-type"] || "";
-    const extension = contentType.includes("mp3") ? "mp3" : "webm";
-    const mime = contentType.includes("mp3") ? "audio/mpeg" : "audio/webm";
-
     const chunks = [];
-    req.on("data", (chunk) => chunks.push(chunk));
+    req.on("data", chunk => chunks.push(chunk));
     req.on("end", async () => {
       const audioBuffer = Buffer.concat(chunks);
 
-      // Validar límite de 4MB por Vercel
-      if (audioBuffer.length > 4 * 1024 * 1024) {
-        return res.status(413).json({ error: "Archivo demasiado grande (máximo 4MB)" });
-      }
+      // DEBUG: mostrar tamaño y tipo estimado
+      console.log("Audio recibido:", audioBuffer.length, "bytes");
 
       const form = new FormData();
       form.append("file", audioBuffer, {
-        filename: `audio.${extension}`,
-        contentType: mime,
+        filename: "audio.mp3", // asegúrate de usar extensión real si es webm
+        contentType: "audio/mpeg", // o "audio/webm" si corresponde
       });
       form.append("model", "whisper-1");
 
@@ -52,12 +45,11 @@ module.exports = async (req, res) => {
 
       const whisperData = await whisperRes.json();
 
+      // Mostrar toda la respuesta de OpenAI por debug
+      console.log("🔎 Whisper Response:", whisperData);
+
       if (!whisperData.text) {
-        console.error("Transcription error:", whisperData);
-        return res.status(500).json({
-          error: "Error en la transcripción",
-          detalle: whisperData,
-        });
+        return res.status(500).json({ error: "OpenAI no devolvió texto", raw: whisperData });
       }
 
       const chatRes = await openai.chat.completions.create({
@@ -79,6 +71,6 @@ module.exports = async (req, res) => {
     });
   } catch (err) {
     console.error("ERROR:", err);
-    res.status(500).json({ error: "Error procesando el archivo de audio" });
+    res.status(500).json({ error: "Error procesando el audio", details: err.message });
   }
 };
