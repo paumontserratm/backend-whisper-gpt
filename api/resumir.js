@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
     const contenido = fragmentos.join("\n");
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4-turbo",
       messages: [
         {
           role: "system",
