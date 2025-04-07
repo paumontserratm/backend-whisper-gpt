@@ -10,6 +10,7 @@ module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "*");
 
+  // Preflight
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
@@ -19,7 +20,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const contentType = req.headers["content-type"];
+    const contentType = req.headers["content-type"] || "";
     const extension = contentType.includes("mp3") ? "mp3" : "webm";
     const mime = contentType.includes("mp3") ? "audio/mpeg" : "audio/webm";
 
@@ -28,9 +29,9 @@ module.exports = async (req, res) => {
     req.on("end", async () => {
       const audioBuffer = Buffer.concat(chunks);
 
-      // VERIFICAR tamaño máximo permitido por Vercel
+      // Validar límite de 4MB por Vercel
       if (audioBuffer.length > 4 * 1024 * 1024) {
-        return res.status(413).json({ error: "Archivo demasiado grande (límite 4 MB)" });
+        return res.status(413).json({ error: "Archivo demasiado grande (máximo 4MB)" });
       }
 
       const form = new FormData();
@@ -53,10 +54,12 @@ module.exports = async (req, res) => {
 
       if (!whisperData.text) {
         console.error("Transcription error:", whisperData);
-        return res.status(500).json({ error: "Error en la transcripción" });
+        return res.status(500).json({
+          error: "Error en la transcripción",
+          detalle: whisperData,
+        });
       }
 
-      // Llama a GPT-4 TURBO para resumir
       const chatRes = await openai.chat.completions.create({
         model: "gpt-4-turbo",
         messages: [
