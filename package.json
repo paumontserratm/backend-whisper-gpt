@@ -1,0 +1,9 @@
+{
+  "name": "backend-whisper-gpt",
+  "version": "1.0.0",
+  "dependencies": {
+    "form-data": "^4.0.0",
+    "node-fetch": "^2.6.9",
+    "openai": "^4.0.0"
+  }
+}
