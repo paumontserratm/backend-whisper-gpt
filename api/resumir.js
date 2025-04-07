@@ -3,6 +3,15 @@ const { OpenAI } = require("openai");
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 module.exports = async (req, res) => {
+  // CORS HEADERS
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "*");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método no permitido" });
   }
@@ -19,8 +28,14 @@ module.exports = async (req, res) => {
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
-        { role: "system", content: "Resume esta reunión de forma clara, ordenada y útil para compartir con alguien que no asistió." },
-        { role: "user", content: contenido },
+        {
+          role: "system",
+          content: "Resume esta reunión de forma clara, ordenada y útil para compartir con alguien que no asistió.",
+        },
+        {
+          role: "user",
+          content: contenido,
+        },
       ],
     });
 
