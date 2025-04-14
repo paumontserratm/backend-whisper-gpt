@@ -17,7 +17,17 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { fragmentos } = req.body;
+    // Aseguramos que el body esté parseado si viene como string
+    let fragmentos;
+
+    if (typeof req.body === "string") {
+      const parsed = JSON.parse(req.body);
+      fragmentos = parsed.fragmentos;
+    } else {
+      fragmentos = req.body.fragmentos;
+    }
+
+    console.log("🧩 Fragmentos recibidos:", fragmentos);
 
     if (!fragmentos || !Array.isArray(fragmentos) || fragmentos.length === 0) {
       return res.status(400).json({ error: "No se proporcionaron fragmentos válidos" });
@@ -43,7 +53,13 @@ module.exports = async (req, res) => {
     res.status(200).json({ resumen });
 
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error en resumir:", error);
+
+    // Si es un problema de JSON mal formado
+    if (error instanceof SyntaxError) {
+      return res.status(400).json({ error: "El body no es un JSON válido" });
+    }
+
     res.status(500).json({ error: "Error al generar el resumen" });
   }
 };
